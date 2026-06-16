@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — WC 2026 Prediction League</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
+:root {
+  --bg:#0a0e1a; --bg2:#0d1220; --surface:#10162a; --surface2:#161d35;
+  --border:#212a47; --text:#e8ecf7; --text2:#8b97b8; --text3:#5c6688;
+  --blue:#4d8eff; --green:#22c55e; --red:#ef4444; --orange:#f5a623;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:440px;width:100%;}
+.title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;}
+input[type=password]{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;padding:12px 14px;outline:none;margin-bottom:16px;font-family:'Inter',sans-serif;}
+input[type=password]:focus{border-color:var(--blue);}
+button{width:100%;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;padding:13px;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;}
+button:hover{background:#3d7eef;}
+.error{color:var(--red);font-size:13px;margin-top:10px;display:none;}
+.error.show{display:block;}
+
+#admin-panel{display:none;}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;margin-right:8px;}
+.step-title{font-weight:700;font-size:14px;display:inline;}
+.step-body{font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6;}
+.step-body a{color:var(--blue);text-decoration:underline;}
+.lock-icon{font-size:32px;margin-bottom:12px;}
+.unlocked-banner{background:#103a20;border:1px solid var(--green);color:var(--green);font-size:13px;font-weight:600;padding:10px 14px;border-radius:8px;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.warning-box{background:#3a2a10;border:1px solid var(--orange);color:#f5c97a;font-size:12px;padding:12px 14px;border-radius:8px;margin-top:20px;line-height:1.5;}
+.logout-link{font-size:12px;color:var(--text3);text-decoration:underline;cursor:pointer;display:inline-block;margin-top:20px;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div id="login-panel">
+    <div class="lock-icon">🔒</div>
+    <div class="title">Admin Access</div>
+    <div class="sub">Enter the password to manage prediction league data.</div>
+    <label for="pw">Password</label>
+    <input type="password" id="pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()">Unlock</button>
+    <div class="error" id="error-msg">Incorrect password. Try again.</div>
+  </div>
+
+  <div id="admin-panel">
+    <div class="unlocked-banner">✓ Unlocked — you can now update the data source</div>
+    <div class="title" style="margin-bottom:4px;">Update prediction data</div>
+    <div class="sub">Follow these steps each time you want to push new results to the live site.</div>
+
+    <div class="step">
+      <span class="step-num">1</span><span class="step-title">Update your Excel file locally</span>
+      <div class="step-body">Make your changes in <strong>Prediction_World_Cup_2026_Master_spreadsheet.xlsx</strong> as usual — new results, new participants, anything.</div>
+    </div>
+
+    <div class="step">
+      <span class="step-num">2</span><span class="step-title">Open the Google Sheet</span>
+      <div class="step-body">Go to <a href="https://docs.google.com/spreadsheets/d/1_cW1Wi8gNTGbBPDHsk1Ie5QYkP2UiqlzQ986CBy16zQ/edit" target="_blank">the linked Google Sheet</a> (opens in a new tab).</div>
+    </div>
+
+    <div class="step">
+      <span class="step-num">3</span><span class="step-title">Re-import the updated file</span>
+      <div class="step-body">In the Google Sheet, click <strong>File → Import → Upload</strong>, select your updated Excel file, and choose <strong>Replace spreadsheet</strong> when prompted.</div>
+    </div>
+
+    <div class="step">
+      <span class="step-num">4</span><span class="step-title">Done</span>
+      <div class="step-body">The live site auto-syncs from this sheet every 5 minutes. Anyone with the site open will see the new data automatically — no need to tell them to refresh or upload anything.</div>
+    </div>
+
+    <div class="warning-box">
+      ⚠️ This password check only happens in your browser — it's a simple deterrent to keep casual visitors from finding these instructions, not real security. Don't reuse a sensitive password here.
+    </div>
+
+    <span class="logout-link" onclick="logout()">Lock again</span>
+  </div>
+</div>
+
+<script>
+// Simple deterrent only — NOT real security. Anyone who opens dev tools can read this.
+// Change this value to whatever password you want participants to never have.
+const ADMIN_PASSWORD = 'vm2026admin';
+const SESSION_KEY = 'wc2026_admin_unlocked';
+
+function checkPassword() {
+  const input = document.getElementById('pw').value;
+  if (input === ADMIN_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    showAdminPanel();
+  } else {
+    document.getElementById('error-msg').classList.add('show');
+  }
+}
+
+function showAdminPanel() {
+  document.getElementById('login-panel').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+}
+
+function logout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('login-panel').style.display = 'block';
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('pw').value = '';
+}
+
+// Stay unlocked for the browser session (closes when tab/browser closes)
+if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  showAdminPanel();
+}
+</script>
+</body>
+</html>

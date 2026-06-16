@@ -191,10 +191,9 @@ tbody td.r{text-align:right;}
         <div class="sub">USA · Canada · Mexico · June 11 – July 19, 2026</div>
       </div>
     </div>
-    <div id="status-badge" onclick="triggerUpload()" title="Click to upload manually if auto-sync isn't showing your data"><span class="pulse"></span> Connecting...</div>
+    <div id="status-badge" title="Live data synced from Google Sheets"><span class="pulse"></span> Connecting...</div>
   </div>
 </header>
-<input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
 
 <nav>
   <div class="nav-inner">
@@ -210,11 +209,9 @@ tbody td.r{text-align:right;}
 <main>
 
 <div id="tabell" class="section visible">
-  <div id="tabell-upload" class="upload-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-    <div class="upload-icon">📊</div>
-    <div class="upload-title">Load the master spreadsheet</div>
-    <div class="upload-sub">Click or drag in your Excel file</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">This page tries to auto-sync from Google Sheets first — use this only if that fails.</div>
+  <div id="tabell-upload" class="loading">
+    <div class="loading-spinner">⚽</div>
+    <div>Loading live standings...</div>
   </div>
   <div id="tabell-content" style="display:none">
     <div class="page-title">🏆 League Table</div>
@@ -236,11 +233,9 @@ tbody td.r{text-align:right;}
 </div>
 
 <div id="kamper" class="section">
-  <div id="kamper-upload" class="upload-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-    <div class="upload-icon">📅</div>
-    <div class="upload-title">Load Excel to see matches</div>
-    <div class="upload-sub">Click or drag in the file</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">This page tries to auto-sync from Google Sheets first — use this only if that fails.</div>
+  <div id="kamper-upload" class="loading">
+    <div class="loading-spinner">⚽</div>
+    <div>Loading matches...</div>
   </div>
   <div id="kamper-content" style="display:none">
     <div class="page-title">📅 Matches</div>
@@ -250,11 +245,9 @@ tbody td.r{text-align:right;}
 </div>
 
 <div id="historie" class="section">
-  <div id="historie-upload" class="upload-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-    <div class="upload-icon">📈</div>
-    <div class="upload-title">Load Excel to see history</div>
-    <div class="upload-sub">Click or drag in the file</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">This page tries to auto-sync from Google Sheets first — use this only if that fails.</div>
+  <div id="historie-upload" class="loading">
+    <div class="loading-spinner">⚽</div>
+    <div>Loading history...</div>
   </div>
   <div id="historie-content" style="display:none">
     <div class="page-title">📈 Standings by match day</div>
@@ -272,11 +265,9 @@ tbody td.r{text-align:right;}
 </div>
 
 <div id="stats" class="section">
-  <div id="stats-upload" class="upload-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-    <div class="upload-icon">🎲</div>
-    <div class="upload-title">Load Excel to see stats</div>
-    <div class="upload-sub">Click or drag in the file</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">This page tries to auto-sync from Google Sheets first — use this only if that fails.</div>
+  <div id="stats-upload" class="loading">
+    <div class="loading-spinner">⚽</div>
+    <div>Loading stats...</div>
   </div>
   <div id="stats-content" style="display:none">
     <div class="page-title">🎲 Fun Statistics</div>
@@ -330,11 +321,9 @@ tbody td.r{text-align:right;}
 </div>
 
 <div id="profil" class="section">
-  <div id="profil-upload" class="upload-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-    <div class="upload-icon">👤</div>
-    <div class="upload-title">Load Excel to see profiles</div>
-    <div class="upload-sub">Click or drag in the file</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">This page tries to auto-sync from Google Sheets first — use this only if that fails.</div>
+  <div id="profil-upload" class="loading">
+    <div class="loading-spinner">⚽</div>
+    <div>Loading profiles...</div>
   </div>
   <div id="profil-content-wrap" style="display:none">
     <div class="page-title">👤 Profile</div>
@@ -362,38 +351,6 @@ const PARTICIPANT_SHEETS = [
 
 function shortName(full) { return full.split(' ')[0]; }
 function stripFlag(s) { return s.replace(/\p{Emoji}/gu,'').trim(); }
-
-function triggerUpload() { document.getElementById('file-input').click(); }
-function dragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag'); }
-function dragLeave(e) { e.currentTarget.classList.remove('drag'); }
-function dropFile(e) {
-  e.preventDefault(); e.currentTarget.classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
-}
-function handleFile(input) {
-  if (input.files[0]) processFile(input.files[0]);
-  input.value = '';
-}
-
-function processFile(file) {
-  const badge = document.getElementById('status-badge');
-  badge.innerHTML = '<span class="pulse"></span> Loading...';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      parseWorkbook(wb);
-      badge.innerHTML = `<span class="pulse"></span> ${played()} matches played`;
-      badge.classList.add('loaded');
-      renderAll();
-    } catch(err) {
-      badge.innerHTML = '<span class="pulse"></span> Error reading file';
-      console.error(err);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
 
 async function fetchFromGoogleSheets(isAutoRefresh) {
   const badge = document.getElementById('status-badge');
